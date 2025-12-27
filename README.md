@@ -1,2 +1,2 @@
-# AI-projects
-AI_Projects
+# News
+A code that gives daily headliners
