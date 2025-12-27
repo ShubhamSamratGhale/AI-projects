@@ -3,28 +3,47 @@ import requests
 from dotenv import load_dotenv
 
 load_dotenv()
-BASE_URL = os.getenv("DICTIONARY_API")
+API_BASE = os.getenv("DICTIONARY_API")
 
-def get_meaning(word):
-    url = f"{BASE_URL}/{word}"
-    response = requests.get(url)
-    if response.status_code == 200:
-        data = response.json()
-        meanings = data[0]["meanings"]
-        for meaning in meanings:
-            part = meaning["partOfSpeech"]
-            definition = meaning["definitions"][0]["definition"]
-            print(f"{part}: {definition}")
-    else:
-        print(f"Error {response.status_code}: Word not found")
+def lookup_word(word):
+    url = f"{API_BASE}/{word}"
+    
+    try:
+        response = requests.get(url, timeout=5)
+        response.raise_for_status()
+    except requests.RequestException as e:
+        print(f"Error fetching word: {e}")
+        return
+    
+    data = response.json()
+    if not data:
+        print("No data found")
+        return
+    
+    print(f"\n'{word}':")
+    
+    for meaning in data[0].get('meanings', []):
+        pos = meaning.get('partOfSpeech', '')
+        defs = meaning.get('definitions', [])
+        
+        if defs:
+            definition = defs[0].get('definition', '')
+            print(f"  ({pos}) {definition}")
 
 def main():
-    print("Dictionary Lookup")
-    while True:         
-        word = input("\nEnter a word (or type exit): ")
-        if word.lower() == "exit":
+    print("Dictionary lookup - type 'quit' to exit")
+    
+    while True:
+        word = input("Word: ").strip()
+        
+        if word.lower() in ['quit', 'q', 'exit']:
             break
-        get_meaning(word)
+            
+        if not word or not word.isalpha():
+            print("Enter a valid word")
+            continue
+            
+        lookup_word(word.lower())
 
 if __name__ == "__main__":
     main()
